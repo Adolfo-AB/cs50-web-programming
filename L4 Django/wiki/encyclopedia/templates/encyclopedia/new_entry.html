@@ -1,0 +1,21 @@
+{% extends "encyclopedia/layout.html" %}
+
+{% block title %}
+    Create a new entry
+{% endblock %}
+
+{% block body %}
+    <h1>Create New Page</h1>
+    <form action="{% url 'save' %}" method="POST">
+        {% csrf_token %}
+        <div>
+            <label for="entry_name" style="display:block;">Page Title:</label>
+            <input id="entry_name" name="entry_name" type="text" placeholder="Page Title">
+         </div>
+        <div>
+            <label for="entry_content" style="display:block;">Page Content:</label>
+            <input  id="entry_content" name="entry_content" type="text" style="width: 500px; height: 200px; display:block;">
+        </div>
+        <input type="submit" value="Save" style="display:block; margin-top: 20px;">
+    </form>
+{% endblock %}
