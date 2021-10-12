@@ -45,8 +45,16 @@ function load_mailbox(mailbox) {
 
 function display(email, mailbox) {
   const divMail = document.createElement('div');
+  divMail.style.border = "thin solid #49a8ff";
+  divMail.style.textAlign = "center";
+  divMail.style.padding = "5px";
+  divMail.style.marginBlock = "5px";
   divMail.className = "row";
   divMail.id = "email";
+
+  if (email.read) {
+    divMail.style.backgroundColor = "#eeeeee";
+  }
 
   const recipient = document.createElement('div');
   recipient.className = "col-lg-2 col-md-3 col-sm-12";
@@ -92,11 +100,6 @@ function display(email, mailbox) {
   
   const mailCard = document.createElement('div');
   mailCard.id = "email-card";
-  if (email.read) {
-    mailCard.className = "card-read";
-  } else {
-    mailCard.className = "card-unread";
-  }
   mailCard.append(divMail);
 
   recipient.addEventListener('click', () => display_details(email.id));
@@ -138,8 +141,10 @@ function display_details(emailID) {
   container.append(document.createElement('hr'));
 
   const body = document.createElement('div');
+  body.style.border = "thin solid black";
+  body.style.paddingBlock = "10px";
+  body.style.paddingInline = "10px";
   body.className = "";
-  body.label = "Content"
   body.id = "email-body";
   body.disabled;
   container.append(body);
@@ -160,7 +165,7 @@ function display_details(emailID) {
     toField.innerHTML = "<strong>To:</strong> "+email.recipients;
     subjectField.innerHTML = "<strong>Subject:</strong> "+email.subject;
     timestampField.innerHTML = "<strong>Timestamp:</strong> "+email.timestamp;
-    body.innerHTML = "<strong>Content:</strong> \n"+email.body;
+    body.innerHTML = "<strong>Content:</strong> \n\n"+email.body;
 
     document.querySelector('#email-details-view').append(container);
     replyButton.addEventListener('click', () => reply(email));
@@ -182,8 +187,8 @@ function reply(email) {
   document.querySelector('#compose-body').value = `\n________________\nOn ${email.timestamp} ${email.sender} wrote:\n${email.body}`;
 }
 
-function change_read_status(emailID) {
-  fetch(`/emails/${emailID}`, {
+async function change_read_status(emailID) {
+  await fetch(`/emails/${emailID}`, {
     method: 'PUT',
     body: body = JSON.stringify({
       read: true
@@ -201,7 +206,6 @@ async function archive(emailID, oldArchived) {
   });
 
   load_mailbox('inbox');
-  //document.location.reload();
 }
 
 function send() {
@@ -219,9 +223,11 @@ function send() {
   })
   .then(response => response.json())
   .then(result => {
-      console.log(result);
+      if (result.error) {
+        console.log(result)
+      } else {
+        load_mailbox('sent');
+      }
   });
-  localStorage.clear();
-  load_mailbox('sent');
   return false;
 }
