@@ -1,0 +1,35 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+<div class='container-fluid'>
+    <div class='container-fluid'>
+        <h2>User Profile: {{ username }}</h2>
+        {% if user.is_authenticated %}
+        <form action="{% url 'follow_unfollow' username%}" method="POST">
+            {% csrf_token %}
+            <input class="btn btn-primary" type="submit" value="{{ label }}"">
+        </form>
+        {% endif %}
+    </div>
+    <div class='container'>
+        <p>Followers: {{ followers }} Following: {{ following }}</p>
+    </div>
+    <div class='container'>
+        {% for post in posts %}
+            <div class="card mb-3">
+                <div class="row no-gutters">
+                <div class="col-md-8">
+                    <div class="card-body">
+                    <h5 class="card-author">{{ post.author }}</h5>
+                    <p class="card-content">{{ post.content }}</p>
+                    <p class="card-datetime">{{ post.datetime }}</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+        {% empty %}
+            No posts yet!
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
