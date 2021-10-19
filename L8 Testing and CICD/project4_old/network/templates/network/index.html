@@ -1,0 +1,56 @@
+{% extends "network/layout.html" %}
+{% load static %}
+
+{% block body %}
+<div class='container-fluid'>
+    <h2>{{ title }}</h2>
+
+    {% if user.is_authenticated and form %}
+    <div class='container'>
+        <h4>New Post</h4>
+            <form action="{% url 'new_post' %}" method="POST">
+                {% csrf_token %}
+                <div class='form-group'>
+                    {{ form }}
+                </div>
+                <div><input class="btn btn-primary" id="post-btn" type="submit" value="Post"></div>
+            </form>
+    </div>
+    <hr>
+    {% endif %}
+    <div class='container'>
+        {% for post in page_posts.object_list %}
+            <div class="card mb-3">
+                <div class="row no-gutters">
+                <div class="col-md-8">
+                    <div class="card-body">
+                    <a class="card-author" href="{% url 'profile' post.author.username %}">{{ post.author }}<a>
+                    <p class="card-content" id="post-content-{{ post.id }}">{{ post.content }}</p>
+                    <p class="card-datetime">{{ post.datetime }}</p>
+                    {% if request.user == post.author %}
+                        <button class="btn btn-sm btn-outline-primary" id="edit-post-btn-{{ post.id }}">Edit</button>
+                    {% endif %}
+                    </div>
+                </div>
+                </div>
+            </div>
+        {% empty %}
+            No posts
+        {% endfor %}
+        <nav aria-label="Pagination">
+            <ul class="pagination">
+                {% if page_posts.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_posts.previous_page_number }}">Newer</a></li>
+                {% endif %}
+                {% if page_posts.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_posts.next_page_number }}">Older</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/index.js' %}"></script>
+{% endblock %}

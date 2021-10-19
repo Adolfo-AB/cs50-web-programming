@@ -1,86 +1,14 @@
-from datetime import datetime
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
-from django.contrib.auth.decorators import login_required
 
+from .models import User
 
-from network.forms import NewPostForm
-from .models import Post, Follow, User
 
 def index(request):
-    posts = Post.objects.order_by("-datetime").all()
-    return render(request, 'network/index.html', {
-        "title": "All Posts",
-        "form": NewPostForm(),
-        "posts": posts
-    })
-
-def new_post(request):
-    if request.method == "POST":
-        content = request.POST["content"]
-
-        post = Post(author=request.user, content=content, datetime=datetime.now)
-        post.save()
-        return HttpResponseRedirect(reverse("index"))
-
-def profile(request, username):
-    profile_user = User.objects.get(username=username)
-    posts = Post.objects.filter(author=profile_user).all()
-    followers = Follow.objects.filter(followed=profile_user).all().count()
-    following = Follow.objects.filter(follower=profile_user).all().count()
-    (follow, label) = get_following_status(request.user, profile_user)
-
-    return render(request, "network/profile.html", {
-                            "username": username,
-                            "followers": followers,
-                            "following": following,
-                            "label": label,
-                            "posts": posts
-    })
-
-def following(request):
-    following = Follow.objects.filter(follower=request.user).all()
-    
-    posts = [f.followed.posts.order_by("-datetime").all() for f in following]
-    return render(request, 'network/index.html', {
-        "title": "Following",
-        "posts": posts
-    })
-
-def follow_unfollow(request, username):
-    profile_user = User.objects.get(username=username)
-    posts = Post.objects.filter(author=profile_user).all()
-    followers = Follow.objects.filter(followed=profile_user).all().count()
-    following = Follow.objects.filter(follower=profile_user).all().count()
-    (follow, label) = get_following_status(request.user, profile_user)
-
-    if follow != None:
-        follow.delete()
-        label = "Follow"
-    else:
-        follow = Follow(follower=request.user, followed=profile_user)
-        follow.save()
-        label = "Unfollow"
-
-    return render(request, "network/profile.html", {
-                            "username": username,
-                            "followers": followers,
-                            "following": following,
-                            "label": label,
-                            "posts": posts
-    })
-
-def get_following_status(follower, followed):
-    try:
-        follow = Follow.objects.get(follower=follower, followed=followed)
-        label = "Unfollow"
-    except:
-        follow = None
-        label = "Follow"
-    return (follow, label)
+    return render(request, "network/index.html")
 
 
 def login_view(request):
