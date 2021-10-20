@@ -1,5 +1,14 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-    <div id="new-post" class=>
+    <div id="new-post" class="container">
+        <h4>New Post</h4>
+        <form action="{% url 'save_post' %}" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <input id='new-post-textarea' class="form-control" type="textarea" name="content" placeholder= "What are you thinking about?">
+            </div>
+            <input class='btn btn-primary' type="submit" value="Post">
+        </form>
+    </div>
 {% endblock %}
