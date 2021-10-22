@@ -1,39 +1,53 @@
 from django.contrib.auth.models import AbstractUser
-from django.utils import timezone
+from django.contrib.auth import get_user_model
 from django.db import models
 
+def get_sentinel_user():
+    return get_user_model().objects.get_or_create(username='deleted')[0]
 
 class User(AbstractUser):
     pass
 
-class UserProfile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    followers = models.ManyToManyField(User, related_name="get_following")
-
-    def serialize(self, user):
-        return {
-            "id": self.user.id,
-            "username": self.user.username,
-            "follow_status": not user.is_anonymous and self in user.get_following.all(),
-            "can_follow": self.user != user and not user.is_anonymous,
-            "following": self.user.get_following.count(),
-            "followers": self.followers.count(),  
-        }
-
 class Post(models.Model):
-    author = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name="get_posts")
+    author = models.ForeignKey(User, on_delete=models.SET(get_sentinel_user))
     datetime = models.DateTimeField(auto_now_add=True)
     content = models.CharField(max_length=280)
-    likes = models.ManyToManyField(UserProfile, blank=True, related_name="get_likes")
 
-    def serialize(self, user):
+    def serialize(self):
         return {
             "id": self.id,
             "content": self.content,
             "datetime": self.datetime,
-            "author_id": self.author.id,
             "author_username": self.author.user.username,
-            "can_edit": self.author.user == user,
-            "likes": self.likes.count(),
-            "liked": not user.is_anonymous and self in UserProfile.objects.filter(user=user).first().get_likes.all()
+            "likes": Like.objects.filter(post=self).all().count()
+        }
+    
+class Like(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET(get_sentinel_user))
+    post = models.ForeignKey(Post, on_delete=models.SET(get_sentinel_user))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user": self.user,
+            "post": self.post
+        }
+
+class Follow(models.Model):
+    follower = models.ForeignKey(User, related_name='follower', on_delete=models.SET(get_sentinel_user))
+    followed = models.ForeignKey(User, related_name='followed', on_delete=models.SET(get_sentinel_user))
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(follower=models.F('followed')),
+                name='users_cannot_follow_themselves'
+            ),
+        ]
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "follower": self.follower,
+            "followed": self.followed
         }
