@@ -1,0 +1,23 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    {% if user.is_authenticated %}
+    <div id="new-post" class="container">
+        <h4>New Post</h4>
+        <form action="{% url 'save_post' %}" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <input id='new-post-textarea' class="form-control" type="textarea" name="content" placeholder= "What are you thinking about?">
+            </div>
+            <input class='btn btn-primary' type="submit" value="Post">
+        </form>
+    </div>
+
+    <div id="profile">
+        <div class="card text-center">
+            <div class="card-header">
+                Following
+                <div id="num-following"></div>
+            </div>
+    {% endif %}
+{% endblock %}

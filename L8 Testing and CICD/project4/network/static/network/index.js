@@ -7,15 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // These 2 views are only available when the user is logged in
     try {
         document.querySelector('#following').addEventListener('click', () => load_following_posts_view());
-        document.querySelector('#user-profile').addEventListener('click', () => load_profile_view());
+        const userProfileLink = document.querySelector('#user-profile')
+        const username = userProfileLink.innerHTML
+        userProfileLink.addEventListener('click', () => load_profile_view(username));
     } catch (error) {
         console.log(error);
     }
-  
-    //document.querySelector('form').onsubmit = send;
-  
+    
     // By default, load the all posts view
-    load_all_posts_view('all-posts-view');
+    load_all_posts_view();
   });
 
   function load_all_posts_view() {
@@ -28,26 +28,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // If the user is logged in, create the New Post components
     if (document.getElementById('log-out')) {
-        console.log("User logged in.")
-        create_new_post_components();
+      console.log("User logged in.")
+      create_new_post_components();
 
-        submitBtn = document.getElementById("submit-post-btn");
-        submitBtn.addEventListener('click', () => {
-            const content = document.getElementById("new-post-content").value;
-            fetch('/save_post', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': ""//getCookie("csrftoken")"
-                },
-                body: bod = JSON.stringify({
-                    content: content
-                })
-            })
-            .then(response => response.json())
-            .then(response => {})
+      document.querySelector('#submit-post-btn').disabled = true;
+      document.querySelector('#new-post-content').onkeyup = () => {
+        if (document.querySelector('#new-post-content').value.length >0) {
+            document.querySelector('#submit-post-btn').disabled = false;
+        } else {
+            document.querySelector('#submit-post-btn').disabled = true
+        }
+      }
 
-    })
-  }}
+      submitBtn = document.getElementById("submit-post-btn");
+      submitBtn.addEventListener('click', () => {
+        console.log("New Post button clicked.")
+        const content = document.getElementById("new-post-content").value;
+        console.log(content)
+        fetch('/add', {
+          method: 'POST',
+          body: JSON.stringify({
+            content: content
+          })
+        })
+      })
+    }
+    get_posts("all")
+}
 
   function load_following_posts_view() {
   
@@ -58,13 +65,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#profile-view').style.display = 'none';
   }
 
-  function load_profile_view() {
+  function load_profile_view(username) {
   
     // Load profile view
     document.querySelector('#profile-view').style.display = 'block';
     // Hide other views
     document.querySelector('#following-posts-view').style.display = 'none';
     document.querySelector('#all-posts-view').style.display = 'none';
+
+    document.querySelector('#profile-header').innerHTML = `User Profile: <strong>${username}</strong>` 
+
+    get_profile_posts(username)
   }
 
   function create_new_post_components() {
@@ -100,4 +111,66 @@ document.addEventListener('DOMContentLoaded', function() {
     form.append(submit);
 
     document.querySelector('#new-post').append(container);
+  }
+
+  function get_posts(page) {
+    fetch(`/posts/${page}`)
+    .then(response => response.json())
+    .then(posts => {
+        console.log(posts);
+        posts.forEach(post => load(post, "all"));
+        });
+  }
+
+  function get_profile_posts(username) {
+    fetch(`/posts/profile/${username}`)
+    .then(response => response.json())
+    .then(posts => {
+        console.log("Posts fetched successfully.")
+        console.log(posts);
+        posts.forEach(post => load(post, "profile"));
+        });
+  }
+
+  function load(post, page) {
+    const cardDiv = document.createElement('div')
+    cardDiv.className = "card mb-1"
+
+    const rowDiv = document.createElement('div')
+    rowDiv.className = "row no-gutter"
+    cardDiv.append(rowDiv)
+
+    const colDiv = document.createElement('div')
+    colDiv.className = "col-md-11"
+    rowDiv.append(colDiv)
+
+    const cardBodyDiv = document.createElement('div')
+    cardBodyDiv.className = "card-body"
+    colDiv.append(cardBodyDiv)
+
+    const postAuthor = document.createElement('a')
+    postAuthor.id = "post-author-${post.author_username}"
+    postAuthor.className = "card-author"
+    postAuthor.href = "#"
+    postAuthor.innerHTML = post.author_username
+    postAuthor.addEventListener('click', () => load_profile_view(post.author_username));
+    cardBodyDiv.append(postAuthor)
+
+    const postContent = document.createElement('p')
+    postContent.id = `post-content-${post.id}`
+    postContent.className = "card-content"
+    postContent.innerHTML = post.content
+    cardBodyDiv.append(postContent)
+
+    const postDateTime = document.createElement('p')
+    postDateTime.className = "card-datetime"
+    postDateTime.innerHTML = post.datetime
+    cardBodyDiv.append(postDateTime)
+
+    if (page === "all") {
+      document.querySelector('#all-posts-container').append(cardDiv);
+    } else if (page === "profile") {
+      document.querySelector('#profile-posts-container').append(cardDiv);
+    }
+
   }

@@ -4,20 +4,29 @@
 {% block body %}
 
 <div id="all-posts-view">
-    <h2>All Posts</h2>
+    <div class="container-fluid">
+        <h2><strong>All Posts</strong></h2>
+    </div>
 
     {% if user.is_authenticated %}
         <div id="new-post">
         </div>
     {% endif %}
+    <hr>
+    <div id="all-posts-container" class="container"></div>
 </div>
 
 <div id="following-posts-view">
-    <h2>Following</h2>
+    <div class="container-fluid">
+        <h2><strong>Following</strong></h2>
+    </div>
 </div>
 
 <div id="profile-view">
-    <h2>User Profile</h2>
+    <div class="container-fluid">
+        <h2 id ="profile-header"></h2>
+        <div id="profile-posts-container" class="container"></div>
+    </div>
 </div>
 
 {% endblock %}

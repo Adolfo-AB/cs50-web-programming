@@ -22,7 +22,7 @@
         {% for post in page_posts.object_list %}
             <div class="card mb-3">
                 <div class="row no-gutters">
-                <div class="col-md-8">
+                <div class="col-md-12">
                     <div class="card-body">
                     <a class="card-author" href="{% url 'profile' post.author.username %}">{{ post.author }}<a>
                     <p class="card-content" id="post-content-{{ post.id }}">{{ post.content }}</p>

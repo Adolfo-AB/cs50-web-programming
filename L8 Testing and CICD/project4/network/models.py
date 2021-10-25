@@ -18,7 +18,7 @@ class Post(models.Model):
             "id": self.id,
             "content": self.content,
             "datetime": self.datetime,
-            "author_username": self.author.user.username,
+            "author_username": self.author.username,
             "likes": Like.objects.filter(post=self).all().count()
         }
     
