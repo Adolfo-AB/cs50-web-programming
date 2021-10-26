@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
         document.querySelector('#following').addEventListener('click', () => load_following_posts_view());
         const userProfileLink = document.querySelector('#user-profile')
-        const username = userProfileLink.innerHTML
+        const username = userProfileLink.innerHTML;
+        console.log(username);
         userProfileLink.addEventListener('click', () => load_profile_view(username));
     } catch (error) {
         console.log(error);
@@ -69,13 +70,36 @@ document.addEventListener('DOMContentLoaded', function() {
   
     // Load profile view
     document.querySelector('#profile-view').style.display = 'block';
+
     // Hide other views
     document.querySelector('#following-posts-view').style.display = 'none';
     document.querySelector('#all-posts-view').style.display = 'none';
+    
+    console.log("Profile loaded successfully")
+    
 
-    document.querySelector('#profile-header').innerHTML = `User Profile: <strong>${username}</strong>` 
+    document.querySelector('#profile-header').innerHTML = `User Profile: <strong>${username}</strong>`;
 
-    get_profile_posts(username)
+    console.log("Before generating posts.")
+    get_profile_posts(username);
+    const followBtn = document.createElement('button');
+    followBtn.id = "follow-btn";
+    followBtn.className = "btn btn-primary";
+    followBtn.innerHTML = "Follow/Unfollow";
+    document.querySelector('#follow-container').append(followBtn);
+    
+    followBtn.addEventListener('click', () => update_follow_status(username))
+
+    console.log("After generating posts.")
+  }
+
+  function update_follow_status(username) {
+    fetch(`/profile/${username}/follow`)
+    .then(response => response.json())
+    .then(response => {
+        console.log("Follow status updated successfully.");
+        console.log(response);
+        });
   }
 
   function create_new_post_components() {
@@ -117,16 +141,18 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch(`/posts/${page}`)
     .then(response => response.json())
     .then(posts => {
+        console.log("All posts fetched successfully.");
         console.log(posts);
         posts.forEach(post => load(post, "all"));
         });
   }
 
   function get_profile_posts(username) {
-    fetch(`/posts/profile/${username}`)
+    console.log("Getting posts...")
+    fetch(`/profile/${username}`)
     .then(response => response.json())
     .then(posts => {
-        console.log("Posts fetched successfully.")
+        console.log("Profile posts fetched successfully.");
         console.log(posts);
         posts.forEach(post => load(post, "profile"));
         });

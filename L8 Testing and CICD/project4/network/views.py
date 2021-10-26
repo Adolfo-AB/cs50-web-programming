@@ -58,6 +58,23 @@ def load_profile(request, username):
     posts = Post.objects.filter(author=profile_user).order_by("-datetime").all()
     return JsonResponse([post.serialize() for post in posts], safe=False)
 
+@csrf_exempt
+def update_follow_status(request, username):
+    try:
+        profile_user = User.objects.get(username=username)
+    except:
+        return JsonResponse({"error": "Invalid profile."})
+    
+    follow = Follow.objects.filter(follower=request.user, followed=profile_user).first()
+    print(follow)
+    if follow != None:
+        follow.delete()
+        return JsonResponse({"message": "Unfollow successful."}, safe=False)
+    else:
+        follow = Follow(follower=request.user, followed=profile_user)
+        follow.save()
+        return JsonResponse(follow.serialize(), safe=False)
+
 
 def login_view(request):
     if request.method == "POST":

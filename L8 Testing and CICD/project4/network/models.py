@@ -37,6 +37,13 @@ class Follow(models.Model):
     follower = models.ForeignKey(User, related_name='follower', on_delete=models.SET(get_sentinel_user))
     followed = models.ForeignKey(User, related_name='followed', on_delete=models.SET(get_sentinel_user))
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "follower": self.follower.username,
+            "followed": self.followed.username
+        }
+
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -44,10 +51,3 @@ class Follow(models.Model):
                 name='users_cannot_follow_themselves'
             ),
         ]
-    
-    def serialize(self):
-        return {
-            "id": self.id,
-            "follower": self.follower,
-            "followed": self.followed
-        }
