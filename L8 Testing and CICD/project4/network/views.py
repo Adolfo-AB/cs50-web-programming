@@ -75,6 +75,20 @@ def update_follow_status(request, username):
         follow.save()
         return JsonResponse(follow.serialize(), safe=False)
 
+@csrf_exempt
+def get_follow_status(request, username):
+    try:
+        profile_user = User.objects.get(username=username)
+    except:
+        return JsonResponse({"error": "Invalid profile."})
+    
+    follow = Follow.objects.filter(follower=request.user, followed=profile_user).first()
+
+    if follow == None:
+        return JsonResponse({"message": "Not following."})
+    else:
+        return JsonResponse(follow.serialize(), safe=False)
+
 
 def login_view(request):
     if request.method == "POST":

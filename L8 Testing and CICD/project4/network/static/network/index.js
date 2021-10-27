@@ -85,7 +85,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const followBtn = document.createElement('button');
     followBtn.id = "follow-btn";
     followBtn.className = "btn btn-primary";
-    followBtn.innerHTML = "Follow/Unfollow";
+
+    fetch(`/profile/${username}/getstatus`)
+    .then(response => response.json())
+    .then(response => {
+      if (response.follower) {
+        followBtn.innerHTML = "Unfollow"
+      } else {
+        followBtn.innerText = "Follow"
+      }
+    })
     document.querySelector('#follow-container').append(followBtn);
     
     followBtn.addEventListener('click', () => update_follow_status(username))
@@ -99,7 +108,19 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => {
         console.log("Follow status updated successfully.");
         console.log(response);
-        });
+        })
+    .then(() => {
+      const followBtn = document.querySelector("#follow-btn")
+      fetch(`/profile/${username}/getstatus`)
+    .then(response => response.json())
+    .then(response => {
+      if (response.follower) {
+        followBtn.innerHTML = "Unfollow"
+      } else {
+        followBtn.innerText = "Follow"
+      }
+    })
+    })
   }
 
   function create_new_post_components() {
