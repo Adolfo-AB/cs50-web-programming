@@ -37,11 +37,13 @@ class Follow(models.Model):
     follower = models.ForeignKey(User, related_name='follower', on_delete=models.SET(get_sentinel_user))
     followed = models.ForeignKey(User, related_name='followed', on_delete=models.SET(get_sentinel_user))
 
-    def serialize(self):
+    def serialize(self, profile_user):
         return {
             "id": self.id,
             "follower": self.follower.username,
-            "followed": self.followed.username
+            "followed": self.followed.username,
+            "number_followers": Follow.objects.filter(followed=profile_user).all().count(),
+            "number_following": Follow.objects.filter(follower=profile_user).all().count()
         }
 
     class Meta:

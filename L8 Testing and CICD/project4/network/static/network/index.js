@@ -82,21 +82,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("Before generating posts.")
     get_profile_posts(username);
+
     const followBtn = document.createElement('button');
     followBtn.id = "follow-btn";
     followBtn.className = "btn btn-primary";
 
+    const numberFollowers = document.createElement('p');
+    numberFollowers.id = "followers-p";
+    const numberFollowing = document.createElement('p');
+    numberFollowing.id = "following-p";
+    
+
     fetch(`/profile/${username}/getstatus`)
     .then(response => response.json())
     .then(response => {
+      if (response.number_followers == undefined) {
+        response.number_followers = 0
+      }
+      if (response.number_following == undefined) {
+        response.number_following = 0
+      }
+      numberFollowers.innerHTML = `Followers: ${response.number_followers}`;
+      numberFollowing.innerHTML = `Following: ${response.number_following}`;
       if (response.follower) {
         followBtn.innerHTML = "Unfollow"
       } else {
         followBtn.innerText = "Follow"
       }
+      
     })
-    document.querySelector('#follow-container').append(followBtn);
-    
+
+    if (document.getElementById('log-out')) {
+      document.querySelector('#follow-container').append(followBtn);
+    }
+
+    document.querySelector('#follow-container').append(numberFollowers);
+    document.querySelector('#follow-container').append(numberFollowing);
+
     followBtn.addEventListener('click', () => update_follow_status(username))
 
     console.log("After generating posts.")
@@ -110,10 +132,21 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(response);
         })
     .then(() => {
-      const followBtn = document.querySelector("#follow-btn")
+      const followBtn = document.querySelector("#follow-btn");
+      const numberFollowers = document.querySelector("#followers-p");
+      const numberFollowing = document.querySelector("#following-p");
       fetch(`/profile/${username}/getstatus`)
     .then(response => response.json())
     .then(response => {
+      console.log(response)
+      if (response.number_followers == undefined) {
+        response.number_followers = 0
+      }
+      if (response.number_following == undefined) {
+        response.number_following = 0
+      }
+      numberFollowers.innerHTML = `Followers: ${response.number_followers}`;
+      numberFollowing.innerHTML = `Following: ${response.number_following}`;
       if (response.follower) {
         followBtn.innerHTML = "Unfollow"
       } else {

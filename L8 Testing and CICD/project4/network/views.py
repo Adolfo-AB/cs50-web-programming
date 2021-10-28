@@ -82,13 +82,15 @@ def get_follow_status(request, username):
     except:
         return JsonResponse({"error": "Invalid profile."})
     
-    follow = Follow.objects.filter(follower=request.user, followed=profile_user).first()
+    if request.user.is_authenticated:
+        follow = Follow.objects.filter(follower=request.user, followed=profile_user).first()
+    else:
+        follow = Follow.objects.filter(followed=profile_user).first()
 
     if follow == None:
-        return JsonResponse({"message": "Not following."})
+        return JsonResponse({"message": "No follows."})
     else:
-        return JsonResponse(follow.serialize(), safe=False)
-
+        return JsonResponse(follow.serialize(profile_user), safe=False)
 
 def login_view(request):
     if request.method == "POST":
