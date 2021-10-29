@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log("DOM Content Loaded Successfully")
     // Toggle between views when clicking on the links
+    
+    // By default, load the all posts view
+    load_all_posts_view();
+
     document.querySelector('#all-posts').addEventListener('click', () => load_all_posts_view());
 
     // These 2 views are only available when the user is logged in
@@ -14,9 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
         console.log(error);
     }
-    
-    // By default, load the all posts view
-    load_all_posts_view();
   });
 
   function load_all_posts_view() {
@@ -54,16 +55,19 @@ document.addEventListener('DOMContentLoaded', function() {
         })
       })
     }
-    get_posts("all")
+    get_posts("all");
 }
 
   function load_following_posts_view() {
-  
-    // Load following posts view
-    document.querySelector('#following-posts-view').style.display = 'block';
     // Hide other views
     document.querySelector('#all-posts-view').style.display = 'none';
     document.querySelector('#profile-view').style.display = 'none';
+  
+    // Load following posts view
+    document.querySelector('#following-posts-view').style.display = 'block';
+
+    get_posts("following");
+    
   }
 
   function load_profile_view(username) {
@@ -81,50 +85,57 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#profile-header').innerHTML = `User Profile: <strong>${username}</strong>`;
 
     console.log("Before generating posts.")
+    const parent = document.querySelector("#profile-posts-container")
+    while (parent.firstChild) {
+      parent.removeChild(parent.lastChild);
+    }
     get_profile_posts(username);
 
-    const followBtn = document.createElement('button');
-    followBtn.id = "follow-btn";
-    followBtn.className = "btn btn-primary";
+    if ((document.querySelector("#follow-btn") == null) && (document.querySelector("#followers-p") == null)) {
+      const followBtn = document.createElement('button');
+      followBtn.id = "follow-btn";
+      followBtn.className = "btn btn-primary";
 
-    const numberFollowers = document.createElement('p');
-    numberFollowers.id = "followers-p";
-    const numberFollowing = document.createElement('p');
-    numberFollowing.id = "following-p";
-    
-
-    fetch(`/profile/${username}/getstatus`)
-    .then(response => response.json())
-    .then(response => {
-      if (response.number_followers == undefined) {
-        response.number_followers = 0
-      }
-      if (response.number_following == undefined) {
-        response.number_following = 0
-      }
-      numberFollowers.innerHTML = `Followers: ${response.number_followers}`;
-      numberFollowing.innerHTML = `Following: ${response.number_following}`;
-      if (response.follower) {
-        followBtn.innerHTML = "Unfollow"
-      } else {
-        followBtn.innerText = "Follow"
-      }
+      const numberFollowers = document.createElement('p');
+      numberFollowers.id = "followers-p";
+      const numberFollowing = document.createElement('p');
+      numberFollowing.id = "following-p";
       
-    })
+      fetch(`/profile/${username}/getprofiledata`)
+      .then(response => response.json())
+      .then(response => {
+        numberFollowers.innerHTML = `Followers: ${response.followers}`;
+        numberFollowing.innerHTML = `Following: ${response.following}`;
+        console.log(response)
+      })
 
-    if (document.getElementById('log-out')) {
-      document.querySelector('#follow-container').append(followBtn);
+
+      fetch(`/profile/${username}/getstatus`)
+      .then(response => response.json())
+      .then(response => {
+        if (response.follower) {
+          followBtn.innerHTML = "Unfollow"
+        } else {
+          followBtn.innerHTML = "Follow"
+        }
+        
+      })
+
+      if ((document.getElementById('log-out')) 
+      && (document.querySelector("#user-profile").innerHTML != document.querySelector(`#post-author-${username}`).innerHTML)) {
+        document.querySelector('#follow-container').append(followBtn);
+      }
+
+      document.querySelector('#follow-container').append(numberFollowers);
+      document.querySelector('#follow-container').append(numberFollowing);
+
+      followBtn.addEventListener('click', () => update_follow_status(username))
     }
-
-    document.querySelector('#follow-container').append(numberFollowers);
-    document.querySelector('#follow-container').append(numberFollowing);
-
-    followBtn.addEventListener('click', () => update_follow_status(username))
 
     console.log("After generating posts.")
   }
 
-  function update_follow_status(username) {
+  async function update_follow_status(username) {
     fetch(`/profile/${username}/follow`)
     .then(response => response.json())
     .then(response => {
@@ -133,28 +144,28 @@ document.addEventListener('DOMContentLoaded', function() {
         })
     .then(() => {
       const followBtn = document.querySelector("#follow-btn");
-      const numberFollowers = document.querySelector("#followers-p");
-      const numberFollowing = document.querySelector("#following-p");
       fetch(`/profile/${username}/getstatus`)
     .then(response => response.json())
     .then(response => {
-      console.log(response)
-      if (response.number_followers == undefined) {
-        response.number_followers = 0
-      }
-      if (response.number_following == undefined) {
-        response.number_following = 0
-      }
-      numberFollowers.innerHTML = `Followers: ${response.number_followers}`;
-      numberFollowing.innerHTML = `Following: ${response.number_following}`;
       if (response.follower) {
         followBtn.innerHTML = "Unfollow"
       } else {
-        followBtn.innerText = "Follow"
+        followBtn.innerHTML = "Follow"
       }
     })
+    .then(() => {
+      const numberFollowers = document.querySelector("#followers-p");
+      const numberFollowing = document.querySelector("#following-p");
+      fetch(`/profile/${username}/getprofiledata`)
+      .then(response => response.json())
+      .then(response => {
+        numberFollowers.innerHTML = `Followers: ${response.followers}`;
+        numberFollowing.innerHTML = `Following: ${response.following}`;
+        console.log(response)
+      })
     })
-  }
+  })
+}
 
   function create_new_post_components() {
     const container = document.createElement('div');
@@ -197,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(posts => {
         console.log("All posts fetched successfully.");
         console.log(posts);
-        posts.forEach(post => load(post, "all"));
+        posts.forEach(post => load(post, page));
         });
   }
 
@@ -229,10 +240,10 @@ document.addEventListener('DOMContentLoaded', function() {
     colDiv.append(cardBodyDiv)
 
     const postAuthor = document.createElement('a')
-    postAuthor.id = "post-author-${post.author_username}"
-    postAuthor.className = "card-author"
-    postAuthor.href = "#"
-    postAuthor.innerHTML = post.author_username
+    postAuthor.id = `post-author-${post.author_username}`;
+    postAuthor.className = "card-author";
+    postAuthor.href = "#";
+    postAuthor.innerHTML = post.author_username;
     postAuthor.addEventListener('click', () => load_profile_view(post.author_username));
     cardBodyDiv.append(postAuthor)
 
@@ -251,6 +262,8 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelector('#all-posts-container').append(cardDiv);
     } else if (page === "profile") {
       document.querySelector('#profile-posts-container').append(cardDiv);
+    } else if (page === "following") {
+      document.querySelector('#following-posts-container').append(cardDiv);
     }
 
   }

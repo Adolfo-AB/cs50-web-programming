@@ -8,6 +8,8 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.paginator import Paginator
+
 
 from .models import User, Post, Like, Follow
 
@@ -66,7 +68,6 @@ def update_follow_status(request, username):
         return JsonResponse({"error": "Invalid profile."})
     
     follow = Follow.objects.filter(follower=request.user, followed=profile_user).first()
-    print(follow)
     if follow != None:
         follow.delete()
         return JsonResponse({"message": "Unfollow successful."}, safe=False)
@@ -85,12 +86,21 @@ def get_follow_status(request, username):
     if request.user.is_authenticated:
         follow = Follow.objects.filter(follower=request.user, followed=profile_user).first()
     else:
-        follow = Follow.objects.filter(followed=profile_user).first()
+        return JsonResponse({"message": "User not authenticated"})
 
     if follow == None:
         return JsonResponse({"message": "No follows."})
     else:
-        return JsonResponse(follow.serialize(profile_user), safe=False)
+        return JsonResponse(follow.serialize(), safe=False)
+
+@csrf_exempt
+def get_profile_data(request, username):
+    try:
+        profile_user = User.objects.get(username=username)
+    except:
+        return JsonResponse({"error": "Invalid profile."})
+    
+    return JsonResponse(profile_user.serialize(), safe=False)
 
 def login_view(request):
     if request.method == "POST":

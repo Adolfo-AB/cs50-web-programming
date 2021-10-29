@@ -6,7 +6,25 @@ def get_sentinel_user():
     return get_user_model().objects.get_or_create(username='deleted')[0]
 
 class User(AbstractUser):
-    pass
+    
+    def serialize(self):
+        
+        if Follow.objects.filter(followed=self).all() == None:
+            followers = 0
+        else:
+            followers = Follow.objects.filter(followed=self).all().count()
+        
+        if Follow.objects.filter(follower=self).all() == None:
+            following = 0
+        else:
+            following = Follow.objects.filter(follower=self).all().count()
+
+        return {
+            "id": self.id,
+            "username": self.username,
+            "followers": followers,
+            "following": following
+        }
 
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.SET(get_sentinel_user))
@@ -37,13 +55,11 @@ class Follow(models.Model):
     follower = models.ForeignKey(User, related_name='follower', on_delete=models.SET(get_sentinel_user))
     followed = models.ForeignKey(User, related_name='followed', on_delete=models.SET(get_sentinel_user))
 
-    def serialize(self, profile_user):
+    def serialize(self):
         return {
             "id": self.id,
             "follower": self.follower.username,
-            "followed": self.followed.username,
-            "number_followers": Follow.objects.filter(followed=profile_user).all().count(),
-            "number_following": Follow.objects.filter(follower=profile_user).all().count()
+            "followed": self.followed.username
         }
 
     class Meta:
