@@ -402,6 +402,11 @@ document.addEventListener('DOMContentLoaded', function() {
     postDateTime.innerHTML = post.datetime
     cardBodyDiv.append(postDateTime)
 
+    const numberOfLikes = document.createElement('a')
+    numberOfLikes.id = `number-likes-${post.id}`
+    numberOfLikes.innerHTML = `${post.likes}  `
+    cardBodyDiv.append(numberOfLikes)
+
     const likeIcon = document.createElement('i')
     likeIcon.id = `like-icon-${post.id}`
     get_like_status(post, likeIcon)
@@ -409,6 +414,20 @@ document.addEventListener('DOMContentLoaded', function() {
       likeIcon.addEventListener('click', () => update_like(post, likeIcon));
     }
     cardBodyDiv.append(likeIcon)
+
+    const hr = document.createElement('hr')
+    cardBodyDiv.append(hr)
+
+    if ((document.getElementById('log-out')) 
+      && (document.querySelector("#user-profile").innerHTML == post.author_username)) {
+        const editPost = document.createElement('a')
+        editPost.id = `edit-post-${post.id}`;
+        editPost.className = "card-edit";
+        editPost.href = "#";
+        editPost.innerHTML = "Edit";
+        editPost.addEventListener('click', () => edit_post(post, page, cardBodyDiv));
+        cardBodyDiv.append(editPost)
+      }
 
     if (page === "all") {
       document.querySelector('#all-posts-container').append(cardDiv);
@@ -420,12 +439,128 @@ document.addEventListener('DOMContentLoaded', function() {
 
   }
 
+  async function edit_post(post, page, cardBodyDiv) {
+    while (cardBodyDiv.firstChild) {
+      cardBodyDiv.removeChild(cardBodyDiv.lastChild);
+    }
+
+    const postAuthor = document.createElement('a')
+    postAuthor.id = `post-author-${post.author_username}`;
+    postAuthor.className = "card-author";
+    postAuthor.href = "#";
+    postAuthor.innerHTML = post.author_username;
+    postAuthor.addEventListener('click', () => load_profile_view(post.author_username,1));
+    cardBodyDiv.append(postAuthor)
+
+    const textArea = document.createElement('textarea');
+    textArea.id = `edit-post-content-${post.id}`;
+    textArea.className = "form-control";
+    textArea.autofocus = "autofocus";
+    textArea.cols = "10";
+    textArea.style.border = "none";
+    textArea.rows = "4";
+    textArea.maxLength = "280";
+    textArea.value = post.content
+    cardBodyDiv.append(textArea)
+
+    const postDateTime = document.createElement('p')
+    postDateTime.className = "card-datetime"
+    postDateTime.innerHTML = post.datetime
+    cardBodyDiv.append(postDateTime)
+
+    const numberOfLikes = document.createElement('a')
+    numberOfLikes.id = `number-likes-${post.id}`
+    numberOfLikes.innerHTML = `${post.likes}  `
+    cardBodyDiv.append(numberOfLikes)
+
+    const likeIcon = document.createElement('i')
+    likeIcon.id = `like-icon-${post.id}`
+    get_like_status(post, likeIcon)
+    if (document.getElementById('following')) {
+      likeIcon.addEventListener('click', () => update_like(post, likeIcon));
+    }
+    cardBodyDiv.append(likeIcon)
+
+    const hr = document.createElement('hr')
+    cardBodyDiv.append(hr)
+
+    const saveEdit = document.createElement('a')
+    saveEdit.id = `save-edit-post-${post.id}`;
+    saveEdit.className = "card-save-edit";
+    saveEdit.href = "#";
+    saveEdit.innerHTML = "Save";
+    saveEdit.addEventListener('click', () => save_edit(post, page, cardBodyDiv));
+    cardBodyDiv.append(saveEdit)
+  }
+
+  async function save_edit(post, page, cardBodyDiv) {
+    const content = document.querySelector(`#edit-post-content-${post.id}`).value;
+    await fetch(`/saveedit/${post.id}`, {
+      method: 'PUT',
+      body: body = JSON.stringify({
+          content: content
+      })})
+      .then(response => response.json())
+      .then(response => {
+        while (cardBodyDiv.firstChild) {
+          cardBodyDiv.removeChild(cardBodyDiv.lastChild);
+        }
+
+      const postAuthor = document.createElement('a')
+      postAuthor.id = `post-author-${post.author_username}`;
+      postAuthor.className = "card-author";
+      postAuthor.href = "#";
+      postAuthor.innerHTML = post.author_username;
+      postAuthor.addEventListener('click', () => load_profile_view(post.author_username,1));
+      cardBodyDiv.append(postAuthor)
+
+      const postContent = document.createElement('p')
+      postContent.id = `post-content-${post.id}`
+      postContent.className = "card-content"
+      postContent.innerHTML = content
+      cardBodyDiv.append(postContent)
+
+      const postDateTime = document.createElement('p')
+      postDateTime.className = "card-datetime"
+      postDateTime.innerHTML = post.datetime
+      cardBodyDiv.append(postDateTime)
+
+      const numberOfLikes = document.createElement('a')
+      numberOfLikes.id = `number-likes-${post.id}`
+      numberOfLikes.innerHTML = `${post.likes}  `
+      cardBodyDiv.append(numberOfLikes)
+
+      const likeIcon = document.createElement('i')
+      likeIcon.id = `like-icon-${post.id}`
+      get_like_status(post, likeIcon)
+      if (document.getElementById('following')) {
+        likeIcon.addEventListener('click', () => update_like(post, likeIcon));
+      }
+      cardBodyDiv.append(likeIcon)
+
+      const hr = document.createElement('hr')
+      cardBodyDiv.append(hr)
+
+      if ((document.getElementById('log-out')) 
+      && (document.querySelector("#user-profile").innerHTML == post.author_username)) {
+        const editPost = document.createElement('a')
+        editPost.id = `edit-post-${post.id}`;
+        editPost.className = "card-edit";
+        editPost.href = "#";
+        editPost.innerHTML = "Edit";
+        editPost.addEventListener('click', () => edit_post(post, page, cardBodyDiv));
+        cardBodyDiv.append(editPost)
+      }
+
+      })
+  }
+
   async function get_like_status(post, likeIcon) {
     console.log("Getting posts like status...")
     await fetch(`/getlikestatus/${post.id}`)
     .then(response => response.json())
     .then(response => {
-      if (response.liked) {
+      if (response.likes) {
         likeIcon.className = `bi bi-suit-heart-fill`;
       } else {
         likeIcon.className = `bi bi-suit-heart`;
@@ -434,14 +569,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function update_like(post, likeIcon) {
+    const numberOfLikes = document.querySelector(`#number-likes-${post.id}`)
     console.log("Getting posts like status...")
     await fetch(`/updatelike/${post.id}`)
     .then(response => response.json())
     .then(response => {
       if (likeIcon.className == `bi bi-suit-heart-fill`) {
         likeIcon.className = `bi bi-suit-heart`;
+        post.likes = post.likes-1
+        numberOfLikes.innerHTML = `${post.likes}  `
       } else {
         likeIcon.className = `bi bi-suit-heart-fill`;
+        post.likes = post.likes+1
+        numberOfLikes.innerHTML = `${post.likes}  `
       }
       });
   }

@@ -19,5 +19,6 @@ urlpatterns = [
     path("profile/<str:username>/getstatus", views.get_follow_status, name="get_follow_status"),
     path("profile/<str:username>/getprofiledata", views.get_profile_data, name="get_profile_data"),
     path("getlikestatus/<int:post_id>", views.get_like_status, name="get_like_status"),
-    path("updatelike/<int:post_id>", views.update_like, name="update_like")
+    path("updatelike/<int:post_id>", views.update_like, name="update_like"),
+    path("saveedit/<int:post_id>", views.save_edit, name="save_edit")
 ]

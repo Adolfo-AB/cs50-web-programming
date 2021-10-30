@@ -158,6 +158,20 @@ def update_like(request, post_id):
         like.save()
         return JsonResponse(like.serialize(), safe=False)
 
+@csrf_exempt
+def save_edit(request, post_id):
+    try:
+        post = Post.objects.get(id=post_id)
+    except:
+        return JsonResponse({"error": "Invalid profile."})
+    
+    if request.method == "PUT":
+        data = json.loads(request.body)
+        print(data)
+        post.content = data["content"]
+        post.save()
+        return JsonResponse(post.serialize(), safe=False)
+
 def login_view(request):
     if request.method == "POST":
 
