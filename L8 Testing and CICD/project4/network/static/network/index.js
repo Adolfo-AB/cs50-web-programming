@@ -402,6 +402,14 @@ document.addEventListener('DOMContentLoaded', function() {
     postDateTime.innerHTML = post.datetime
     cardBodyDiv.append(postDateTime)
 
+    const likeIcon = document.createElement('i')
+    likeIcon.id = `like-icon-${post.id}`
+    get_like_status(post, likeIcon)
+    if (document.getElementById('following')) {
+      likeIcon.addEventListener('click', () => update_like(post, likeIcon));
+    }
+    cardBodyDiv.append(likeIcon)
+
     if (page === "all") {
       document.querySelector('#all-posts-container').append(cardDiv);
     } else if (page === "profile") {
@@ -410,4 +418,30 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelector('#following-posts-container').append(cardDiv);
     }
 
+  }
+
+  async function get_like_status(post, likeIcon) {
+    console.log("Getting posts like status...")
+    await fetch(`/getlikestatus/${post.id}`)
+    .then(response => response.json())
+    .then(response => {
+      if (response.liked) {
+        likeIcon.className = `bi bi-suit-heart-fill`;
+      } else {
+        likeIcon.className = `bi bi-suit-heart`;
+      }
+      });
+  }
+
+  async function update_like(post, likeIcon) {
+    console.log("Getting posts like status...")
+    await fetch(`/updatelike/${post.id}`)
+    .then(response => response.json())
+    .then(response => {
+      if (likeIcon.className == `bi bi-suit-heart-fill`) {
+        likeIcon.className = `bi bi-suit-heart`;
+      } else {
+        likeIcon.className = `bi bi-suit-heart-fill`;
+      }
+      });
   }

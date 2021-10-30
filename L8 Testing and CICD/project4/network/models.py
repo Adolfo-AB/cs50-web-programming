@@ -47,8 +47,9 @@ class Like(models.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "user": self.user,
-            "post": self.post
+            "user": self.user.username,
+            "post": self.post.id,
+            "liked": "yes"
         }
 
 class Follow(models.Model):

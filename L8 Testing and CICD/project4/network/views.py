@@ -133,6 +133,31 @@ def get_profile_data(request, username):
     
     return JsonResponse(profile_user.serialize(), safe=False)
 
+@csrf_exempt
+def get_like_status(request, post_id):
+    try:
+        post = Post.objects.get(id=post_id)
+    except:
+        return JsonResponse({"error": "Invalid profile."})
+    
+    return JsonResponse(post.serialize(), safe=False)
+
+@csrf_exempt
+def update_like(request, post_id):
+    try:
+        post = Post.objects.get(id=post_id)
+    except:
+        return JsonResponse({"error": "Invalid profile."})
+    
+    like = Like.objects.filter(user=request.user, post=post).first()
+    if like != None:
+        like.delete()
+        return JsonResponse({"message": "Unfollow successful."}, safe=False)
+    else:
+        like = Like(user=request.user, post=post)
+        like.save()
+        return JsonResponse(like.serialize(), safe=False)
+
 def login_view(request):
     if request.method == "POST":
 
