@@ -18,6 +18,31 @@ def index(request):
     return render(request, "network/index.html")
 
 @csrf_exempt
+def get_all_posts(request, page):
+    if page == "all":
+        posts = Post.objects.order_by("-datetime").all()
+    elif page == "following":
+        followed_users = [f.followed for f in Follow.objects.filter(follower=request.user).all()]
+        posts = [Post.objects.filter(author=user).all() for user in followed_users]
+        posts = list(chain(*posts))
+    else:
+        return JsonResponse({"error": "Invalid mailbox."}, status=400)
+
+    # Return emails in reverse chronologial order
+    return JsonResponse([post.serialize() for post in posts], safe=False)
+
+@csrf_exempt
+def get_all_posts_profile(request, username):
+    try:
+        profile_user = User.objects.get(username=username)
+    except:
+        return JsonResponse({"error": "Invalid profile."})
+
+    posts = Post.objects.filter(author=profile_user).order_by("-datetime").all()
+
+    return JsonResponse([post.serialize() for post in posts], safe=False)
+
+@csrf_exempt
 @login_required
 def add(request):
     # Adding a new post must be via POST method
@@ -36,7 +61,7 @@ def add(request):
     return JsonResponse({"message": "Post saved successfully."}, status=201)
 
 @csrf_exempt
-def load(request, page):
+def load(request, page, page_number):
     # Filter emails returned based on page
     if page == "all":
         posts = Post.objects.order_by("-datetime").all()
@@ -47,18 +72,24 @@ def load(request, page):
     else:
         return JsonResponse({"error": "Invalid mailbox."}, status=400)
 
+    paginator = Paginator(posts, 10)
+    page_posts = paginator.get_page(page_number)
+
     # Return emails in reverse chronologial order
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    return JsonResponse([post.serialize() for post in page_posts], safe=False)
 
 @csrf_exempt
-def load_profile(request, username):
+def load_profile(request, username, page_number):
     try:
         profile_user = User.objects.get(username=username)
     except:
         return JsonResponse({"error": "Invalid profile."})
 
     posts = Post.objects.filter(author=profile_user).order_by("-datetime").all()
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    paginator = Paginator(posts, 10)
+    page_posts = paginator.get_page(page_number)
+
+    return JsonResponse([post.serialize() for post in page_posts], safe=False)
 
 @csrf_exempt
 def update_follow_status(request, username):

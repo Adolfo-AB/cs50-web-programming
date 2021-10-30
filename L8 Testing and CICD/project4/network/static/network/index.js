@@ -4,29 +4,44 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toggle between views when clicking on the links
     
     // By default, load the all posts view
-    load_all_posts_view();
+    load_all_posts_view(1);
 
-    document.querySelector('#all-posts').addEventListener('click', () => load_all_posts_view());
+    document.querySelector('#all-posts').addEventListener('click', () => load_all_posts_view(1));
 
     // These 2 views are only available when the user is logged in
     try {
-        document.querySelector('#following').addEventListener('click', () => load_following_posts_view());
+        document.querySelector('#following').addEventListener('click', () => load_following_posts_view(1));
         const userProfileLink = document.querySelector('#user-profile')
         const username = userProfileLink.innerHTML;
         console.log(username);
-        userProfileLink.addEventListener('click', () => load_profile_view(username));
+        userProfileLink.addEventListener('click', () => load_profile_view(username, 1));
     } catch (error) {
         console.log(error);
     }
   });
 
-  function load_all_posts_view() {
+  async function load_all_posts_view(page_number) {
   
     // Load all posts view
     document.querySelector('#all-posts-view').style.display = 'block';
     // Hide other views
     document.querySelector('#following-posts-view').style.display = 'none';
     document.querySelector('#profile-view').style.display = 'none';
+
+    const parentAll = document.querySelector("#all-posts-container")
+    while (parentAll.firstChild) {
+      parentAll.removeChild(parentAll.lastChild);
+    }
+
+    const parentFollowing = document.querySelector("#following-posts-container")
+    while (parentFollowing.firstChild) {
+      parentFollowing.removeChild(parentFollowing.lastChild);
+    }
+
+    const parentProfile = document.querySelector("#profile-posts-container")
+    while (parentProfile.firstChild) {
+      parentProfile.removeChild(parentProfile.lastChild);
+    }
 
     // If the user is logged in, create the New Post components
     if (document.getElementById('log-out')) {
@@ -55,10 +70,38 @@ document.addEventListener('DOMContentLoaded', function() {
         })
       })
     }
-    get_posts("all");
+    await get_posts("all",page_number);
+
+    const nav = document.createElement('nav');
+    nav.ariaLabel = "Page navigation";
+    nav.className = "navi";
+
+    const ulPagination = document.createElement('ul');
+    ulPagination.className = "pagination";
+    nav.append(ulPagination);
+
+    const number_posts = document.querySelectorAll(".card-body").length
+    if (number_posts == 10) {
+      const liNext = document.createElement('li');
+      liNext.className = "page-link";
+      liNext.innerHTML = "Next";
+      ulPagination.append(liNext);
+      liNext.addEventListener('click', () => load_all_posts_view(page_number+1));
+    }
+
+    if (page_number != 1) {
+      const liPrev = document.createElement('li');
+      liPrev.className = "page-link";
+      liPrev.innerHTML = "Previous";
+      ulPagination.append(liPrev);
+      liPrev.addEventListener('click', () => load_all_posts_view(page_number-1));
+    }
+
+    document.querySelector('#all-posts-container').append(nav);
+
 }
 
-  function load_following_posts_view() {
+  async function load_following_posts_view(page_number) {
     // Hide other views
     document.querySelector('#all-posts-view').style.display = 'none';
     document.querySelector('#profile-view').style.display = 'none';
@@ -66,12 +109,55 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load following posts view
     document.querySelector('#following-posts-view').style.display = 'block';
 
-    get_posts("following");
+    const parentAll = document.querySelector("#all-posts-container")
+    while (parentAll.firstChild) {
+      parentAll.removeChild(parentAll.lastChild);
+    }
+
+    const parentFollowing = document.querySelector("#following-posts-container")
+    while (parentFollowing.firstChild) {
+      parentFollowing.removeChild(parentFollowing.lastChild);
+    }
+
+    const parentProfile = document.querySelector("#profile-posts-container")
+    while (parentProfile.firstChild) {
+      parentProfile.removeChild(parentProfile.lastChild);
+    }
+
+    await get_posts("following", page_number);
+
+    const nav = document.createElement('nav');
+    nav.ariaLabel = "Page navigation";
+    nav.className = "navi";
+
+    const ulPagination = document.createElement('ul');
+    ulPagination.className = "pagination";
+    nav.append(ulPagination);
+
+    const number_posts = document.querySelectorAll(".card-body").length
+    console.log(`aksjajhsa: ${number_posts}`)
+    if (number_posts >= 10) {
+      const liNext = document.createElement('li');
+      liNext.className = "page-link";
+      liNext.innerHTML = "Next";
+      ulPagination.append(liNext);
+      liNext.addEventListener('click', () => load_following_posts_view(page_number+1));
+    }
+
+
+    if (page_number != 1) {
+      const liPrev = document.createElement('li');
+      liPrev.className = "page-link";
+      liPrev.innerHTML = "Previous";
+      ulPagination.append(liPrev);
+      liPrev.addEventListener('click', () => load_following_posts_view(page_number-1));
+    }
+
+    document.querySelector('#following-posts-container').append(nav);
     
   }
 
-  function load_profile_view(username) {
-  
+  async function load_profile_view(username, page_number) {
     // Load profile view
     document.querySelector('#profile-view').style.display = 'block';
 
@@ -85,11 +171,22 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#profile-header').innerHTML = `User Profile: <strong>${username}</strong>`;
 
     console.log("Before generating posts.")
-    const parent = document.querySelector("#profile-posts-container")
-    while (parent.firstChild) {
-      parent.removeChild(parent.lastChild);
+    const parentAll = document.querySelector("#all-posts-container")
+    while (parentAll.firstChild) {
+      parentAll.removeChild(parentAll.lastChild);
     }
-    get_profile_posts(username);
+
+    const parentFollowing = document.querySelector("#following-posts-container")
+    while (parentFollowing.firstChild) {
+      parentFollowing.removeChild(parentFollowing.lastChild);
+    }
+
+    const parentProfile = document.querySelector("#profile-posts-container")
+    while (parentProfile.firstChild) {
+      parentProfile.removeChild(parentProfile.lastChild);
+    }
+
+    await get_profile_posts(username, page_number);
 
     if ((document.querySelector("#follow-btn") == null) && (document.querySelector("#followers-p") == null)) {
       const followBtn = document.createElement('button');
@@ -132,7 +229,32 @@ document.addEventListener('DOMContentLoaded', function() {
       followBtn.addEventListener('click', () => update_follow_status(username))
     }
 
-    console.log("After generating posts.")
+    const nav = document.createElement('nav');
+    nav.ariaLabel = "Page navigation";
+    nav.className = "navi";
+
+    const ulPagination = document.createElement('ul');
+    ulPagination.className = "pagination";
+    nav.append(ulPagination);
+
+    const number_posts = document.querySelectorAll(".card-body").length
+    if (number_posts >= 10) {
+      const liNext = document.createElement('li');
+      liNext.className = "page-link";
+      liNext.innerHTML = "Next";
+      ulPagination.append(liNext);
+      liNext.addEventListener('click', () => load_profile_view(username, page_number+1));
+    }
+
+    if (page_number != 1) {
+      const liPrev = document.createElement('li');
+      liPrev.className = "page-link";
+      liPrev.innerHTML = "Previous";
+      ulPagination.append(liPrev);
+      liPrev.addEventListener('click', () => load_profile_view(username, page_number-1));
+    }
+
+    document.querySelector("#profile-posts-container").append(nav);
   }
 
   async function update_follow_status(username) {
@@ -168,6 +290,12 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
   function create_new_post_components() {
+
+    const parent = document.querySelector("#new-post")
+    while (parent.firstChild) {
+      parent.removeChild(parent.lastChild);
+    }
+
     const container = document.createElement('div');
     container.className = "container";
 
@@ -202,8 +330,24 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#new-post').append(container);
   }
 
-  function get_posts(page) {
-    fetch(`/posts/${page}`)
+  async function get_number_posts(page) {
+    await fetch(`/getposts/${page}`)
+    .then(response => response.json())
+    .then(posts => {
+        return posts.length;
+        });
+  }
+
+  async function get_number_posts_profile(username) {
+    await fetch(`/getpostsprofile/${username}`)
+    .then(response => response.json())
+    .then(posts => {
+        return posts.length;
+        });
+  }
+
+  async function get_posts(page, page_number) {
+    await fetch(`/posts/${page}/${page_number}`)
     .then(response => response.json())
     .then(posts => {
         console.log("All posts fetched successfully.");
@@ -212,9 +356,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
   }
 
-  function get_profile_posts(username) {
+  async function get_profile_posts(username, page_number) {
     console.log("Getting posts...")
-    fetch(`/profile/${username}`)
+    await fetch(`/profile/${username}/${page_number}`)
     .then(response => response.json())
     .then(posts => {
         console.log("Profile posts fetched successfully.");
@@ -244,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
     postAuthor.className = "card-author";
     postAuthor.href = "#";
     postAuthor.innerHTML = post.author_username;
-    postAuthor.addEventListener('click', () => load_profile_view(post.author_username));
+    postAuthor.addEventListener('click', () => load_profile_view(post.author_username,1));
     cardBodyDiv.append(postAuthor)
 
     const postContent = document.createElement('p')
